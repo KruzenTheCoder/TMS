@@ -1,5 +1,19 @@
 import { supabaseServer, generateTicketNumber } from './_lib/supabase'
 
+const APP_NAME = process.env.APP_NAME || process.env.NEXT_PUBLIC_APP_NAME || 'TMSS Matric Farewell 2025'
+const EVENT_DATE_ISO = process.env.EVENT_DATE || process.env.NEXT_PUBLIC_EVENT_DATE || '2025-11-27'
+const EVENT_TIME = process.env.EVENT_TIME || process.env.NEXT_PUBLIC_EVENT_TIME || '11:00 - 17:00'
+const EVENT_VENUE = process.env.EVENT_VENUE || process.env.NEXT_PUBLIC_EVENT_VENUE || 'Havenpark Secondary School'
+
+const dateLabel = (() => {
+  try {
+    const d = new Date(EVENT_DATE_ISO)
+    return d.toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' })
+  } catch {
+    return 'November 27, 2025'
+  }
+})()
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' })
@@ -86,10 +100,10 @@ export default async function handler(req: any, res: any) {
             student_name: fullName,
             student_id: autoStudentId,
             class: cls.name,
-            event_name: 'TMSS Matric Farewell 2024',
-            event_date: 'December 04, 2024',
-            event_time: '10:30AM - 16:00 PM',
-            venue: 'Havenpark Secondary School Hall',
+            event_name: APP_NAME,
+            event_date: dateLabel,
+            event_time: EVENT_TIME,
+            venue: EVENT_VENUE,
             entertainment: 'DJ by TMSS',
           },
         },
