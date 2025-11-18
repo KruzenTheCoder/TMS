@@ -1,128 +1,90 @@
-import { supabaseServer, generateTicketNumber } from './_lib/supabase'
+import { supabaseServer } from './_lib/supabase'
 
-const APP_NAME = process.env.APP_NAME || process.env.NEXT_PUBLIC_APP_NAME || 'TMSS Matric Farewell 2025'
-const EVENT_DATE_ISO = process.env.EVENT_DATE || process.env.NEXT_PUBLIC_EVENT_DATE || '2025-11-27'
-const EVENT_TIME = process.env.EVENT_TIME || process.env.NEXT_PUBLIC_EVENT_TIME || '11:00 - 17:00'
-const EVENT_VENUE = process.env.EVENT_VENUE || process.env.NEXT_PUBLIC_EVENT_VENUE || 'Havenpark Secondary School'
+interface VercelRequest {
+  method?: string;
+  body: unknown;
+}
+interface VercelResponse {
+  status: (code: number) => VercelResponse;
+  json: (body: unknown) => void;
+}
 
-const dateLabel = (() => {
-  try {
-    const d = new Date(EVENT_DATE_ISO)
-    return d.toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' })
-  } catch {
-    return 'November 27, 2025'
-  }
-})()
-
-export default async function handler(req: unknown, res: unknown) {
-  const r = req as { method?: string; body?: unknown }
-  const s = res as { status: (code: number) => { json: (data: unknown) => void } }
-
-  if (r.method !== 'POST') {
-    s.status(405).json({ error: 'Method not allowed' })
-    return
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' })
   }
 
   try {
-    const raw = r.body
-    const body = typeof raw === 'string' ? JSON.parse(raw) : raw
-    const { name, surname, className } = (body || {}) as { name?: string; surname?: string; className?: string }
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body
+    const { name, surname, className } = body || {}
 
     if (!name || !surname || !className) {
-      s.status(400).json({ error: 'Missing required fields' })
-      return
+      return res.status(400).json({ error: 'Missing required fields' })
     }
 
-    const fullName = `${name} ${surname}`
-
-    // Resolve class by name (create if missing)
-    let { data: cls } = await supabaseServer
+    let cls
+    const { data: existingClass } = await supabaseServer
       .from('classes')
       .select('id, name')
-      .eq('name', className)
+      .ilike('name', className)
       .maybeSingle()
 
-    if (!cls) {
+    if (existingClass) {
+      cls = existingClass
+    } else {
       const { data: created, error: createErr } = await supabaseServer
         .from('classes')
-        .insert([{ name: className, grade: '12' }])
+        .insert([{ name: className }])
         .select('id, name')
         .single()
+      
       if (createErr || !created) {
-        s.status(400).json({ error: 'Invalid class selected' })
-        return
+        return res.status(400).json({ error: 'Invalid class selected' })
       }
       cls = created
     }
 
-    // Prevent duplicate registration by name + class
     const { data: existing } = await supabaseServer
       .from('students')
       .select('id')
-      .eq('name', fullName)
+      .eq('name', name)
+      .eq('surname', surname)
       .eq('class_id', cls.id)
       .maybeSingle()
 
     if (existing) {
-      s.status(409).json({ error: 'Student already registered for this class' })
-      return
+      return res.status(409).json({ error: 'Student already registered for this class' })
     }
 
-    // Auto-generate a student_id
-    const ticketSeed = generateTicketNumber()
-    const autoStudentId = `S-${ticketSeed}`
-
-    // Create student
     const { data: student, error: studentError } = await supabaseServer
       .from('students')
-      .insert([
-        {
-          student_id: autoStudentId,
-          name: fullName,
-          email: null,
-          class_id: cls.id,
-          registered: true,
-        },
-      ])
+      .insert([{ name, surname, class_id: cls.id, attended: false }])
       .select()
       .single()
 
     if (studentError || !student) {
-      s.status(500).json({ error: 'Failed to create student' })
-      return
+      return res.status(500).json({ error: 'Failed to create student' })
     }
 
-    // Create ticket
-    const ticketNumber = generateTicketNumber()
+    const uniqueCode = `${name.substring(0, 2).toUpperCase()}${Date.now().toString().slice(-6)}`
     const { data: ticket, error: ticketError } = await supabaseServer
       .from('tickets')
-      .insert([
-        {
-          student_id: student.id,
-          barcode: ticketNumber,
-          ticket_data: {
-            student_name: fullName,
-            student_id: autoStudentId,
-            class: cls.name,
-            event_name: APP_NAME,
-            event_date: dateLabel,
-            event_time: EVENT_TIME,
-            venue: EVENT_VENUE,
-            entertainment: 'DJ by TMSS',
-          },
-        },
-      ])
+      .insert([{ 
+          student_id: student.id, 
+          barcode: uniqueCode, 
+          is_used: false, 
+          ticket_data: { student_name: `${name} ${surname}`, class: className } 
+      }])
       .select()
       .single()
 
     if (ticketError || !ticket) {
-      s.status(500).json({ error: 'Failed to create ticket' })
-      return
+      return res.status(500).json({ error: 'Failed to create ticket' })
     }
 
-    s.status(200).json({ student, ticket })
+    return res.status(200).json({ student, ticket })
   } catch (e: unknown) {
-    const message = e && typeof e === 'object' && 'message' in e ? String((e as { message: unknown }).message) : 'Unknown error'
-    s.status(500).json({ error: 'Server error', details: message })
+    const message = e && typeof e === 'object' && 'message' in e ? String((e as { message: unknown }).message) : 'Unknown'
+    return res.status(500).json({ error: 'Server error', details: message })
   }
 }

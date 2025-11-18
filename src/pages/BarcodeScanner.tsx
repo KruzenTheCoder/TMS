@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { QrCode, AlertCircle, CheckCircle } from 'lucide-react'
+import { QrCode, AlertCircle, CheckCircle, Camera } from 'lucide-react'
+type DetectedCode = { rawValue?: string }
+type LastScanBase = { id: string; name: string; student_id: string; class?: { name?: string } }
+type LastScan = LastScanBase & { status: 'success' | 'fail'; message: string }
+type FallbackTicket = { id: string; barcode: string; is_used: boolean; student: LastScanBase }
 import { Scanner as QrScanner } from '@yudiel/react-qr-scanner'
 import { toast } from 'sonner'
 import { supabase } from '../lib/supabase'
@@ -211,7 +215,10 @@ const BarcodeScanner = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <h1 className="text-3xl font-bold text-white mb-2">Entry Scanner</h1>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Camera className="w-6 h-6 text-white" />
+            <h1 className="text-3xl font-bold text-white">Entry Scanner</h1>
+          </div>
           <p className="text-yellow-400">Scan student tickets for check-in</p>
         </motion.div>
 
@@ -348,8 +355,3 @@ const BarcodeScanner = () => {
 }
 
 export default BarcodeScanner
-
-type DetectedCode = { rawValue?: string }
-type LastScanBase = { id: string; name: string; student_id: string; class?: { name?: string } }
-type LastScan = LastScanBase & { status: 'success' | 'fail'; message: string }
-type FallbackTicket = { id: string; barcode: string; is_used: boolean; student: LastScanBase }
