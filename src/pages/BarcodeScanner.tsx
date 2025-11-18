@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { QrCode, Camera, AlertCircle, CheckCircle } from 'lucide-react'
+import { QrCode, AlertCircle, CheckCircle } from 'lucide-react'
 import { Scanner as QrScanner } from '@yudiel/react-qr-scanner'
 import { toast } from 'sonner'
 import { supabase } from '../lib/supabase'
 
 const BarcodeScanner = () => {
   const [scanning, setScanning] = useState(false)
-  const [lastScanned, setLastScanned] = useState<any>(null)
+  const [lastScanned, setLastScanned] = useState<LastScan | null>(null)
   const [cameraPermission, setCameraPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt')
   const [manualCode, setManualCode] = useState('')
   const [manualSubmitting, setManualSubmitting] = useState(false)
@@ -19,13 +19,14 @@ const BarcodeScanner = () => {
   const checkCameraPermission = async () => {
     try {
       const result = await navigator.permissions.query({ name: 'camera' as PermissionName })
-      setCameraPermission(result.state as any)
+      const state = result.state
+      setCameraPermission(state === 'granted' ? 'granted' : state === 'denied' ? 'denied' : 'prompt')
     } catch (error) {
       console.log('Camera permission check failed:', error)
     }
   }
 
-  const handleScan = async (detectedCodes: any[]) => {
+  const handleScan = async (detectedCodes: DetectedCode[]) => {
     if (!detectedCodes || detectedCodes.length === 0 || scanning) return
 
     const result = detectedCodes[0]?.rawValue
@@ -46,7 +47,7 @@ const BarcodeScanner = () => {
       if (response.status === 404) {
         await checkinFallback(barcode, 'scan')
       } else {
-        let json: any = null
+        let json: unknown = null
         const ct = response.headers.get('content-type')
         if (ct && ct.includes('application/json')) {
           try { json = await response.json() } catch { json = null }
@@ -56,12 +57,13 @@ const BarcodeScanner = () => {
           setScanning(false)
           return
         }
+        const data = json as { student?: LastScanBase }
         setLastScanned({
-          ...json.student,
+          ...(data.student as LastScanBase),
           status: 'success',
           message: 'Successfully checked in!'
         })
-        toast.success(`${json.student?.name || 'Ticket'} checked in successfully!`)
+        toast.success(`${data.student?.name || 'Ticket'} checked in successfully!`)
       }
 
     } catch (error) {
@@ -72,7 +74,7 @@ const BarcodeScanner = () => {
     }
   }
 
-  const handleError = (error: any) => {
+  const handleError = (error: unknown) => {
     console.error('Scanner error:', error)
     toast.error('Camera error. Please check permissions.')
   }
@@ -94,7 +96,7 @@ const BarcodeScanner = () => {
         await checkinFallback(code, 'manual')
         setManualCode('')
       } else {
-        let json: any = null
+        let json: unknown = null
         const ct = response.headers.get('content-type')
         if (ct && ct.includes('application/json')) {
           try { json = await response.json() } catch { json = null }
@@ -103,12 +105,13 @@ const BarcodeScanner = () => {
           toast.error('Check-in failed')
           return
         }
+        const data = json as { student?: LastScanBase }
         setLastScanned({
-          ...json.student,
+          ...(data.student as LastScanBase),
           status: 'success',
           message: 'Successfully checked in!'
         })
-        toast.success(`${json.student?.name || 'Ticket'} checked in successfully!`)
+        toast.success(`${data.student?.name || 'Ticket'} checked in successfully!`)
         setManualCode('')
       }
     } catch (error) {
@@ -132,9 +135,11 @@ const BarcodeScanner = () => {
         return
       }
 
-      if (ticket.is_used) {
+      const t = ticket as unknown as FallbackTicket
+
+      if (t.is_used) {
         setLastScanned({
-          ...ticket.student,
+          ...t.student,
           status: 'fail',
           message: 'Ticket already used'
         })
@@ -147,16 +152,16 @@ const BarcodeScanner = () => {
       const { error: sErr } = await supabase
         .from('students')
         .update({ attended: true, check_in_time: nowIso })
-        .eq('id', ticket.student.id)
+        .eq('id', t.student.id)
 
       const { error: aErr } = await supabase
         .from('attendance')
-        .insert([{ student_id: ticket.student.id, check_in_method: method, scanned_by: 'admin' }])
+        .insert([{ student_id: t.student.id, check_in_method: method, scanned_by: 'admin' }])
 
       const { error: uErr } = await supabase
         .from('tickets')
         .update({ is_used: true })
-        .eq('id', ticket.id)
+        .eq('id', t.id)
 
       if (sErr || aErr || uErr) {
         toast.error('Check-in failed (permissions). Run migrations policies.')
@@ -164,11 +169,11 @@ const BarcodeScanner = () => {
       }
 
       setLastScanned({
-        ...ticket.student,
+        ...t.student,
         status: 'success',
         message: 'Successfully checked in!'
       })
-      toast.success(`${ticket.student?.name || 'Ticket'} checked in successfully!`)
+      toast.success(`${t.student?.name || 'Ticket'} checked in successfully!`)
     } catch (e) {
       toast.error('Fallback check-in failed')
       console.error('Fallback error:', e)
@@ -343,3 +348,8 @@ const BarcodeScanner = () => {
 }
 
 export default BarcodeScanner
+
+type DetectedCode = { rawValue?: string }
+type LastScanBase = { id: string; name: string; student_id: string; class?: { name?: string } }
+type LastScan = LastScanBase & { status: 'success' | 'fail'; message: string }
+type FallbackTicket = { id: string; barcode: string; is_used: boolean; student: LastScanBase }

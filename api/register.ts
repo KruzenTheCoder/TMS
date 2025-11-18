@@ -14,18 +14,22 @@ const dateLabel = (() => {
   }
 })()
 
-export default async function handler(req: any, res: any) {
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed' })
+export default async function handler(req: unknown, res: unknown) {
+  const r = req as { method?: string; body?: unknown }
+  const s = res as { status: (code: number) => { json: (data: unknown) => void } }
+
+  if (r.method !== 'POST') {
+    s.status(405).json({ error: 'Method not allowed' })
     return
   }
 
   try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body
-    const { name, surname, className } = body
+    const raw = r.body
+    const body = typeof raw === 'string' ? JSON.parse(raw) : raw
+    const { name, surname, className } = (body || {}) as { name?: string; surname?: string; className?: string }
 
     if (!name || !surname || !className) {
-      res.status(400).json({ error: 'Missing required fields' })
+      s.status(400).json({ error: 'Missing required fields' })
       return
     }
 
@@ -45,7 +49,7 @@ export default async function handler(req: any, res: any) {
         .select('id, name')
         .single()
       if (createErr || !created) {
-        res.status(400).json({ error: 'Invalid class selected' })
+        s.status(400).json({ error: 'Invalid class selected' })
         return
       }
       cls = created
@@ -60,7 +64,7 @@ export default async function handler(req: any, res: any) {
       .maybeSingle()
 
     if (existing) {
-      res.status(409).json({ error: 'Student already registered for this class' })
+      s.status(409).json({ error: 'Student already registered for this class' })
       return
     }
 
@@ -84,7 +88,7 @@ export default async function handler(req: any, res: any) {
       .single()
 
     if (studentError || !student) {
-      res.status(500).json({ error: 'Failed to create student' })
+      s.status(500).json({ error: 'Failed to create student' })
       return
     }
 
@@ -112,12 +116,13 @@ export default async function handler(req: any, res: any) {
       .single()
 
     if (ticketError || !ticket) {
-      res.status(500).json({ error: 'Failed to create ticket' })
+      s.status(500).json({ error: 'Failed to create ticket' })
       return
     }
 
-    res.status(200).json({ student, ticket })
-  } catch (e: any) {
-    res.status(500).json({ error: 'Server error', details: e?.message })
+    s.status(200).json({ student, ticket })
+  } catch (e: unknown) {
+    const message = e && typeof e === 'object' && 'message' in e ? String((e as { message: unknown }).message) : 'Unknown error'
+    s.status(500).json({ error: 'Server error', details: message })
   }
 }

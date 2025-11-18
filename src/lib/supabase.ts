@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 const supabaseUrl =
   import.meta.env.VITE_SUPABASE_URL ||
@@ -41,7 +41,7 @@ function createStubClient() {
     from() {
       return builder
     },
-  } as any
+  } as unknown as SupabaseClient
 }
 
 export const supabase = isConfigured
@@ -82,7 +82,7 @@ export interface Ticket {
   id: string
   student_id: string
   barcode: string
-  ticket_data: any
+  ticket_data: TicketData
   is_used: boolean
   created_at: string
   student?: Student
@@ -95,4 +95,15 @@ export interface Attendance {
   check_in_method: string
   scanned_by: string | null
   student?: Student
+}
+
+export interface TicketData {
+  student_name: string
+  student_id: string
+  class: string
+  event_name: string
+  event_date: string
+  event_time: string
+  venue: string
+  entertainment: string
 }

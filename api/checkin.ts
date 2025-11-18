@@ -1,16 +1,20 @@
 import { supabaseServer } from './_lib/supabase'
 
-export default async function handler(req: any, res: any) {
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed' })
+export default async function handler(req: unknown, res: unknown) {
+  const r = req as { method?: string; body?: unknown }
+  const s = res as { status: (code: number) => { json: (data: unknown) => void } }
+
+  if (r.method !== 'POST') {
+    s.status(405).json({ error: 'Method not allowed' })
     return
   }
 
   try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body
-    const { barcode } = body
+    const raw = r.body
+    const body = typeof raw === 'string' ? JSON.parse(raw) : raw
+    const { barcode } = (body || {}) as { barcode?: string }
     if (!barcode) {
-      res.status(400).json({ error: 'Missing barcode' })
+      s.status(400).json({ error: 'Missing barcode' })
       return
     }
 
@@ -22,12 +26,12 @@ export default async function handler(req: any, res: any) {
       .single()
 
     if (tErr || !ticket) {
-      res.status(404).json({ error: 'Ticket not found' })
+      s.status(404).json({ error: 'Ticket not found' })
       return
     }
 
     if (ticket.is_used) {
-      res.status(409).json({ error: 'Ticket already used' })
+      s.status(409).json({ error: 'Ticket already used' })
       return
     }
 
@@ -38,7 +42,7 @@ export default async function handler(req: any, res: any) {
       .eq('id', ticket.student_id)
 
     if (sErr) {
-      res.status(500).json({ error: 'Failed to update student' })
+      s.status(500).json({ error: 'Failed to update student' })
       return
     }
 
@@ -50,8 +54,9 @@ export default async function handler(req: any, res: any) {
       { student_id: ticket.student_id, check_in_method: 'barcode' },
     ])
 
-    res.status(200).json({ success: true, student: ticket.student })
-  } catch (e: any) {
-    res.status(500).json({ error: 'Server error', details: e?.message })
+    s.status(200).json({ success: true, student: ticket.student })
+  } catch (e: unknown) {
+    const message = e && typeof e === 'object' && 'message' in e ? String((e as { message: unknown }).message) : 'Unknown error'
+    s.status(500).json({ error: 'Server error', details: message })
   }
 }
