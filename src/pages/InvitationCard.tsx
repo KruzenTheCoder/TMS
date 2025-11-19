@@ -99,17 +99,26 @@ const InvitationCard = () => {
                       <p className="text-white text-xs sm:text-sm mt-1">{eventTime}</p>
                       <p className="text-yellow-300 text-sm sm:text-base mt-1">{yearNum}</p>
                     </div>
-                    <div className="flex flex-col items-center justify-center sm:flex-row sm:space-x-2">
+                    <div className="flex flex-col items-center justify-center gap-1 text-center">
                       <MapPin className="w-5 h-5 text-yellow-400 mb-1 sm:mb-0" />
-                      <p className="text-white text-sm uppercase tracking-wider text-center">Venue: {eventVenue}</p>
+                      <span className="text-white text-sm uppercase tracking-wider leading-tight">Venue: {eventVenue}</span>
                     </div>
-                    <div className="flex flex-col items-center justify-center sm:flex-row sm:space-x-2">
+                    <div className="flex flex-col items-center justify-center gap-1 text-center">
                       <Star className="w-5 h-5 text-yellow-400 mb-1 sm:mb-0" />
-                      <p className="text-white text-sm uppercase tracking-wider text-center">Dress Code: {dressCode}</p>
+                      <span className="text-white text-sm uppercase tracking-wider leading-tight">Dress Code: {dressCode}</span>
                     </div>
                   </motion.div>
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 0.8 }} className="text-center mb-4 sm:mb-5">
                     <p className="text-yellow-400 text-sm font-semibold uppercase tracking-wider">No Weapons, Alcohol or Drugs Allowed!</p>
+                  </motion.div>
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.6, duration: 0.6 }} className="text-center mb-3 sm:mb-4">
+                    <p className="text-yellow-300 text-xs sm:text-sm uppercase tracking-wider mb-2">For RSVP contact</p>
+                    <div className="grid grid-cols-2 gap-2 max-w-xs mx-auto">
+                      <p className="text-white text-xs sm:text-sm">F. Naidoo</p>
+                      <p className="text-white text-xs sm:text-sm">A.L. Peter</p>
+                      <p className="text-white text-xs sm:text-sm">S. Hariparsad</p>
+                      <p className="text-white text-xs sm:text-sm">S. Balgobind</p>
+                    </div>
                   </motion.div>
                   <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.8, duration: 0.8 }} className="text-center">
                     <motion.button whileHover={{ scale: 1.03, boxShadow: "0 12px 24px rgba(255, 215, 0, 0.25)" }} whileTap={{ scale: 0.95 }} onClick={() => navigate('/register')} className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-slate-900 px-6 sm:px-8 py-3 rounded-full text-base sm:text-lg font-bold uppercase tracking-wider shadow-2xl transition-all duration-300 hover:from-yellow-500 hover:via-yellow-600 hover:to-yellow-700">

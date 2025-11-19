@@ -11,6 +11,13 @@ import { createClient } from '@supabase/supabase-js'
 import type { Student, Class } from '../lib/supabase'
 import { toast } from 'sonner'
 
+const CLASS_TEACHERS: Record<string, string> = {
+  '12A': 'S. Balgobind',
+  '12B': 'A.L. Peter',
+  '12C': 'F. Naidoo',
+  '12D': 'S. Hariparsad',
+}
+
 const AdminDashboard = () => {
   const [students, setStudents] = useState<Student[]>([])
   const [classes, setClasses] = useState<Class[]>([])
@@ -27,6 +34,26 @@ const AdminDashboard = () => {
     return () => {
       supabase.removeChannel(channel)
     }
+  }, [])
+
+  useEffect(() => {
+    const seedIfEmpty = async () => {
+      try {
+        const { data } = await supabase
+          .from('authorized_students')
+          .select('id')
+          .eq('class_name', '12A')
+          .limit(1)
+
+        if ((!data || data.length === 0) && !sessionStorage.getItem('seeded_12A')) {
+          await seedAuthorized12A()
+          sessionStorage.setItem('seeded_12A', '1')
+        }
+      } catch {
+        // silent
+      }
+    }
+    seedIfEmpty()
   }, [])
 
   const fetchDashboardData = async () => {
@@ -48,6 +75,67 @@ const AdminDashboard = () => {
     }
   }
 
+  const seedAuthorized12A = async () => {
+    const authorized12A = [
+      { surname: 'BAJRUNGBALI', first: 'Reshani' },
+      { surname: 'DAVNARAIN', first: 'Kiara - Ann' },
+      { surname: 'DLAMINI', first: 'Andisa Khanya' },
+      { surname: 'DLAMINI', first: 'Siphesihle Yolanda' },
+      { surname: 'DLAMINI', first: 'Yolanda Olwethu' },
+      { surname: 'EBRAHIM', first: 'Zaarah' },
+      { surname: 'GOVENDER', first: 'Bernette' },
+      { surname: 'GOVENDER', first: 'Tamia Lee' },
+      { surname: 'GUMEDE', first: 'Candice Andiswa' },
+      { surname: 'HARILAL', first: 'Brandon Ezekiel' },
+      { surname: 'KABITUNGA', first: 'Aphile' },
+      { surname: 'KHATSHWA', first: 'Sanelisiwe' },
+      { surname: 'MASUKU', first: 'Siphokuhle Amahle' },
+      { surname: 'MATI', first: 'Anele Lucas' },
+      { surname: 'MDLALOSE', first: 'Amahle' },
+      { surname: 'MDLETSHE', first: 'Ashante Lucia' },
+      { surname: 'MHLONGO', first: 'Sthembile' },
+      { surname: 'MICHAEL', first: 'Jared' },
+      { surname: 'MKHIZE', first: 'Saneliswe' },
+      { surname: 'MOONSAMY', first: 'Deuel Zion' },
+      { surname: 'MUNSAMY', first: 'Amelia' },
+      { surname: 'MUNSAMY', first: 'Thamishka' },
+      { surname: 'NAICKER', first: 'Teneal Alyssa' },
+      { surname: 'NAIDOO', first: 'Jordan Clemence' },
+      { surname: 'NAIDOO', first: 'Seshlan' },
+      { surname: 'NAIR', first: 'Makayla' },
+      { surname: 'NDLOVU', first: 'Snothile Sanelisiwe' },
+      { surname: 'NOKRAJ', first: 'Sohaan' },
+      { surname: 'PILLAY', first: 'Aiden' },
+      { surname: 'PILLAY', first: 'Brayleen Esther' },
+      { surname: 'PILLAY', first: 'Keenan James' },
+      { surname: 'SEWNARAIN', first: 'Suniel' },
+      { surname: 'SHAIK', first: 'Tasmiya' },
+      { surname: 'SHAMASE', first: 'Sibongiso Kwanele' },
+      { surname: 'SOPOTELA', first: 'Omphile' },
+      { surname: 'THEVAR', first: 'Kovashen' },
+      { surname: 'WINDVOGEL', first: 'Liam Shaun' },
+    ]
+
+    const records = authorized12A.map(({ surname, first }) => ({
+      name: `${String(first).replace(/\s+/g, ' ').trim()} ${String(surname).replace(/\s+/g, ' ').trim()}`,
+      class_name: '12A'
+    }))
+
+    try {
+      const { error } = await supabase
+        .from('authorized_students')
+        .upsert(records)
+
+      if (error) {
+        toast.error('Failed to import authorized learners')
+      } else {
+        toast.success('Imported 12A authorized learners')
+      }
+    } catch {
+      toast.error('Failed to import authorized learners')
+    }
+  }
+
   // Calculate statistics
   const totalStudents = students.length
   const registeredStudents = students.filter(s => s.registered).length
@@ -55,18 +143,21 @@ const AdminDashboard = () => {
   const attendanceRate = totalStudents > 0 ? (attendedStudents / totalStudents) * 100 : 0
 
   // Class statistics
-  const classStats = classes.map(cls => {
-    const classStudents = students.filter(s => s.class_id === cls.id)
-    const registered = classStudents.filter(s => s.registered).length
-    const attended = classStudents.filter(s => s.attended).length
-    return {
-      ...cls,
-      total: classStudents.length,
-      registered,
-      attended,
-      attendanceRate: registered > 0 ? (attended / registered) * 100 : 0
-    }
-  })
+  const classStats = classes
+    .filter(cls => ['12A','12B','12C','12D'].includes(cls.name))
+    .map(cls => {
+      const classStudents = students.filter(s => s.class_id === cls.id)
+      const registered = classStudents.filter(s => s.registered).length
+      const attended = classStudents.filter(s => s.attended).length
+      return {
+        ...cls,
+        total: classStudents.length,
+        registered,
+        attended,
+        attendanceRate: registered > 0 ? (attended / registered) * 100 : 0,
+        teacherName: CLASS_TEACHERS[cls.name] || cls.form_teacher?.name || 'N/A',
+      }
+    })
 
   const exportToCSV = () => {
     const headers = ['Student ID', 'Name', 'Class', 'Registered', 'Attended', 'Check-in Time']
@@ -211,7 +302,7 @@ const AdminDashboard = () => {
                 {classStats.map((cls) => (
                   <tr key={cls.id} className="border-b border-slate-100 hover:bg-slate-50">
                     <td className="py-3 px-4 font-medium">{cls.name}</td>
-                    <td className="py-3 px-4">{cls.form_teacher?.name || 'N/A'}</td>
+                    <td className="py-3 px-4">{cls.teacherName}</td>
                     <td className="py-3 px-4 text-center">{cls.total}</td>
                     <td className="py-3 px-4 text-center text-green-600 font-medium">{cls.registered}</td>
                     <td className="py-3 px-4 text-center text-yellow-600 font-medium">{cls.attended}</td>
@@ -238,7 +329,7 @@ const AdminDashboard = () => {
                     cls.attendanceRate >= 60 ? 'text-yellow-600' : 'text-red-600'
                   }`}>{cls.attendanceRate.toFixed(1)}%</span>
                 </div>
-                <p className="text-sm text-slate-600">Teacher: {cls.form_teacher?.name || 'N/A'}</p>
+                <p className="text-sm text-slate-600">Teacher: {cls.teacherName}</p>
                 <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                   <div>
                     <p className="text-xs text-slate-500">Total</p>

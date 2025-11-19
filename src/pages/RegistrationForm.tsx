@@ -8,7 +8,7 @@ import { generateTicketNumber } from '../utils/ticketUtils'
 const RegistrationForm = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
-  const classOptions = ['12A', '12B', '12C', '12D', '12E', '12F']
+  const classOptions = ['12A', '12B', '12C', '12D']
   const appName = import.meta.env.VITE_APP_NAME || 'TMSS Matric Farewell 2025'
   const eventDate = import.meta.env.VITE_EVENT_DATE || '2025-11-27'
   const eventTime = import.meta.env.VITE_EVENT_TIME || '11:00 - 17:00'
@@ -31,9 +31,28 @@ const RegistrationForm = () => {
 
     try {
       let json: { student: { id: string } } | null = null
+      const fullName = `${formData.name.trim()} ${formData.surname.trim()}`
+
+      try {
+        const { data: allowed } = await supabase
+          .from('authorized_students')
+          .select('id, name, class_name')
+          .ilike('name', fullName)
+          .eq('class_name', formData.className)
+          .maybeSingle()
+
+        if (!allowed) {
+          toast.error('Sorry, only Grade 12 TMSS learners can register')
+          setLoading(false)
+          return
+        }
+      } catch {
+        toast.error('Sorry, only Grade 12 TMSS learners can register')
+        setLoading(false)
+        return
+      }
 
       if (import.meta.env.DEV) {
-        const fullName = `${formData.name} ${formData.surname}`
         const { data: cls } = await supabase
           .from('classes')
           .select('id, name')
@@ -119,7 +138,6 @@ const RegistrationForm = () => {
           })
         })
         if (response.status === 404) {
-          const fullName = `${formData.name} ${formData.surname}`
           const { data: cls } = await supabase
             .from('classes')
             .select('id, name')
