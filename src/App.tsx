@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Toaster } from 'sonner'
 import InvitationCard from './pages/InvitationCard'
@@ -7,6 +7,7 @@ const RegistrationForm = lazy(() => import('./pages/RegistrationForm'))
 const TicketPage = lazy(() => import('./pages/TicketPage'))
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
 const BarcodeScanner = lazy(() => import('./pages/BarcodeScanner'))
+const ADMIN_PASS = import.meta.env.VITE_ADMIN_PASSWORD || 'Admin@123'
 
 const Navigation = () => {
   const location = useLocation()
@@ -47,6 +48,54 @@ const Navigation = () => {
   )
 }
 
+const PasswordPrompt = ({ title, onSuccess }: { title: string; onSuccess: () => void }) => {
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (password === ADMIN_PASS) {
+      sessionStorage.setItem('tmss_admin_auth', '1')
+      onSuccess()
+    } else {
+      setError('Incorrect password')
+    }
+  }
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center px-4">
+      <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl border-2 border-yellow-400 p-6">
+        <h1 className="text-xl font-bold text-slate-900 mb-2">{title}</h1>
+        <p className="text-slate-600 mb-4">Enter admin password to continue</p>
+        <form onSubmit={submit} className="space-y-4">
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg focus:border-yellow-500 focus:outline-none"
+            required
+          />
+          {error && <div className="text-red-600 text-sm">{error}</div>}
+          <button type="submit" className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 text-slate-900 py-3 rounded-lg font-bold uppercase tracking-wider">
+            Continue
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+const ProtectedAdmin = () => {
+  const [authed, setAuthed] = useState(sessionStorage.getItem('tmss_admin_auth') === '1')
+  if (authed) return <AdminDashboard />
+  return <PasswordPrompt title="Admin" onSuccess={() => setAuthed(true)} />
+}
+
+const ProtectedScanner = () => {
+  const [authed, setAuthed] = useState(sessionStorage.getItem('tmss_admin_auth') === '1')
+  if (authed) return <BarcodeScanner />
+  return <PasswordPrompt title="Scanner" onSuccess={() => setAuthed(true)} />
+}
+
 function App() {
   return (
     <Router>
@@ -58,8 +107,8 @@ function App() {
               <Route path="/" element={<InvitationCard />} />
               <Route path="/register" element={<RegistrationForm />} />
               <Route path="/ticket/:id" element={<TicketPage />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/scanner" element={<BarcodeScanner />} />
+              <Route path="/admin" element={<ProtectedAdmin />} />
+              <Route path="/admin/scanner" element={<ProtectedScanner />} />
             </Routes>
           </Suspense>
         </AnimatePresence>
