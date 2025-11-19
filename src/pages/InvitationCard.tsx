@@ -67,7 +67,14 @@ const InvitationCard = () => {
                 <div className="absolute -top-32 -left-20 w-64 h-64 bg-yellow-400/20 rounded-full blur-2xl"></div>
                 <div className="absolute -bottom-40 -right-24 w-80 h-80 bg-yellow-500/10 rounded-full blur-2xl"></div>
               </motion.div>
-              <motion.div initial={{ x: '-100%' }} animate={{ x: '100%' }} transition={{ duration: 3, repeat: Infinity, ease: 'linear' }} className="pointer-events-none absolute inset-y-0 -left-1 w-24 bg-gradient-to-r from-transparent via-white/10 to-transparent rotate-12" />
+              <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                <motion.div
+                  initial={{ x: '-50%' }}
+                  animate={{ x: '50%' }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                  className="absolute top-0 left-0 h-full w-[150%] bg-gradient-to-r from-transparent via-white/10 to-transparent rotate-12"
+                />
+              </div>
               <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: "easeOut" }} className="relative z-10 w-full h-full p-3 sm:p-5 scale-[0.95] sm:scale-100 origin-center">
                 <div className="w-full max-w-sm mx-auto">
                   <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.3, duration: 0.8 }} className="text-center mb-3 sm:mb-4">
@@ -113,16 +120,30 @@ const InvitationCard = () => {
                   </motion.div>
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.6, duration: 0.6 }} className="text-center mb-3 sm:mb-4">
                     <p className="text-yellow-300 text-xs sm:text-sm uppercase tracking-wider mb-2">For RSVP contact</p>
-                    <div className="grid grid-cols-2 gap-2 max-w-xs mx-auto">
-                      <p className="text-white text-xs sm:text-sm">F. Naidoo</p>
-                      <p className="text-white text-xs sm:text-sm">A.L. Peter</p>
-                      <p className="text-white text-xs sm:text-sm">S. Hariparsad</p>
-                      <p className="text-white text-xs sm:text-sm">S. Balgobind</p>
+                    <div className="relative overflow-hidden max-w-sm mx-auto">
+                      <motion.div initial={{ x: 0 }} animate={{ x: '-50%' }} transition={{ duration: 12, repeat: Infinity, ease: 'linear' }} className="inline-flex items-center gap-6 whitespace-nowrap">
+                        <span className="text-white text-xs sm:text-sm">F. Naidoo</span>
+                        <span className="text-yellow-400">•</span>
+                        <span className="text-white text-xs sm:text-sm">A.L. Peter</span>
+                        <span className="text-yellow-400">•</span>
+                        <span className="text-white text-xs sm:text-sm">S. Hariparsad</span>
+                        <span className="text-yellow-400">•</span>
+                        <span className="text-white text-xs sm:text-sm">S. Balgobind</span>
+                        <span className="text-yellow-400">•</span>
+                        <span className="text-white text-xs sm:text-sm">F. Naidoo</span>
+                        <span className="text-yellow-400">•</span>
+                        <span className="text-white text-xs sm:text-sm">A.L. Peter</span>
+                        <span className="text-yellow-400">•</span>
+                        <span className="text-white text-xs sm:text-sm">S. Hariparsad</span>
+                        <span className="text-yellow-400">•</span>
+                        <span className="text-white text-xs sm:text-sm">S. Balgobind</span>
+                      </motion.div>
                     </div>
                   </motion.div>
                   <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.8, duration: 0.8 }} className="text-center">
-                    <motion.button whileHover={{ scale: 1.03, boxShadow: "0 12px 24px rgba(255, 215, 0, 0.25)" }} whileTap={{ scale: 0.95 }} onClick={() => navigate('/register')} className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-slate-900 px-6 sm:px-8 py-2 rounded-full text-base sm:text-lg font-bold uppercase tracking-wider shadow-2xl transition-all duration-300 hover:from-yellow-500 hover:via-yellow-600 hover:to-yellow-700">
-                      Accept Invitation
+                    <motion.button whileHover={{ scale: 1.03, boxShadow: "0 12px 24px rgba(255, 215, 0, 0.25)" }} whileTap={{ scale: 0.95 }} onClick={() => navigate('/register')} className="relative overflow-hidden bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-slate-900 px-6 sm:px-8 py-2 rounded-full text-base sm:text-lg font-bold uppercase tracking-wider shadow-2xl transition-all duration-300 hover:from-yellow-500 hover:via-yellow-600 hover:to-yellow-700">
+                      <span className="relative z-10">Accept Invitation</span>
+                      <motion.span initial={{ x: '-100%' }} animate={{ x: '100%' }} transition={{ duration: 2.5, repeat: Infinity, ease: 'linear' }} className="absolute inset-y-0 -left-1 w-1/2 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
                     </motion.button>
                   </motion.div>
                 </div>
