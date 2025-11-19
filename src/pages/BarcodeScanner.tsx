@@ -221,6 +221,40 @@ const BarcodeScanner = () => {
           </div>
           <p className="text-yellow-400">Scan student tickets for check-in</p>
         </motion.div>
+        {lastScanned && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`sticky top-4 z-10 rounded-xl shadow-xl p-4 mb-6 ${
+              lastScanned.status === 'success' 
+                ? 'bg-green-50 border-2 border-green-200' 
+                : 'bg-red-50 border-2 border-red-200'
+            }`}
+          >
+            <div className="flex items-center space-x-3">
+              {lastScanned.status === 'success' ? (
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              ) : (
+                <AlertCircle className="w-8 h-8 text-red-600" />
+              )}
+              <div>
+                <h3 className={`text-base font-bold ${
+                  lastScanned.status === 'success' ? 'text-green-900' : 'text-red-900'
+                }`}>
+                  {lastScanned.name}
+                </h3>
+                <p className={`text-sm ${
+                  lastScanned.status === 'success' ? 'text-green-700' : 'text-red-700'
+                }`}>
+                  {lastScanned.message}
+                </p>
+                <p className="text-xs text-slate-600 mt-1">
+                  Student ID: {lastScanned.student_id} • Class: {lastScanned.class?.name}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Scanner */}
         <motion.div
@@ -301,41 +335,7 @@ const BarcodeScanner = () => {
           </div>
         </motion.div>
 
-        {/* Last Scanned Result */}
-        {lastScanned && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`rounded-xl shadow-xl p-6 ${
-              lastScanned.status === 'success' 
-                ? 'bg-green-50 border-2 border-green-200' 
-                : 'bg-red-50 border-2 border-red-200'
-            }`}
-          >
-            <div className="flex items-center space-x-4">
-              {lastScanned.status === 'success' ? (
-                <CheckCircle className="w-12 h-12 text-green-600" />
-              ) : (
-                <AlertCircle className="w-12 h-12 text-red-600" />
-              )}
-              <div>
-                <h3 className={`text-lg font-bold ${
-                  lastScanned.status === 'success' ? 'text-green-900' : 'text-red-900'
-                }`}>
-                  {lastScanned.name}
-                </h3>
-                <p className={`text-sm ${
-                  lastScanned.status === 'success' ? 'text-green-700' : 'text-red-700'
-                }`}>
-                  {lastScanned.message}
-                </p>
-                <p className="text-xs text-slate-600 mt-1">
-                  Student ID: {lastScanned.student_id} • Class: {lastScanned.class?.name}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        )}
+        
 
         {/* Instructions */}
         <div className="mt-8 text-center text-white">

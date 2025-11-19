@@ -20,8 +20,6 @@ const RegistrationForm = () => {
     surname: '',
     className: ''
   })
-  const [checking, setChecking] = useState(false)
-  const [health, setHealth] = useState<{ label: string; status: 'ok' | 'fail'; detail?: string }[]>([])
 
   useEffect(() => {
     // no-op: static class list
@@ -219,53 +217,6 @@ const RegistrationForm = () => {
     }
   }
 
-  const runHealthCheck = async () => {
-    setChecking(true)
-    const results: { label: string; status: 'ok' | 'fail'; detail?: string }[] = []
-
-    try {
-      const { error } = await supabase
-        .from('classes')
-        .select('id, name')
-        .limit(1)
-
-      if (error) {
-        results.push({ label: 'Supabase client', status: 'fail', detail: error.message || 'Unknown error' })
-      } else {
-        results.push({ label: 'Supabase client', status: 'ok' })
-      }
-
-      if (error && /relation|Not configured/i.test(error.message)) {
-        results.push({ label: 'Tables', status: 'fail', detail: 'Missing classes/students/tickets tables' })
-      } else {
-        results.push({ label: 'Tables', status: 'ok' })
-      }
-
-      const envOk = Boolean(
-        (import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL) &&
-        (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-      )
-      results.push({ label: 'Env vars', status: envOk ? 'ok' : 'fail', detail: envOk ? undefined : 'Missing URL or anon key' })
-
-      setHealth(results)
-      const fail = results.find(r => r.status === 'fail')
-      if (fail) {
-        toast.error(`${fail.label} failed: ${fail.detail || ''}`)
-      } else {
-        toast.success('Health check passed')
-      }
-    } catch (e: unknown) {
-      let msg = 'Unknown error'
-      if (e && typeof e === 'object' && 'message' in e) {
-        const m = (e as { message: unknown }).message
-        msg = typeof m === 'string' ? m : String(m)
-      }
-      setHealth([{ label: 'Health check', status: 'fail', detail: msg }])
-      toast.error('Health check failed')
-    } finally {
-      setChecking(false)
-    }
-  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({
@@ -286,25 +237,6 @@ const RegistrationForm = () => {
           <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 px-6 py-8">
             <h1 className="text-2xl font-bold text-slate-900 mb-2">Student Registration</h1>
             <p className="text-slate-700">{appName}</p>
-            <div className="mt-4 flex items-center gap-3">
-              <button
-                type="button"
-                onClick={runHealthCheck}
-                disabled={checking}
-                className="bg-white border-2 border-yellow-600 text-amber-800 px-3 py-2 rounded-lg font-semibold disabled:opacity-50"
-              >
-                {checking ? 'Checking...' : 'Health Check'}
-              </button>
-              {health.length > 0 && (
-                <div className="flex flex-wrap gap-2 text-sm">
-                  {health.map((h, idx) => (
-                    <span key={idx} className={h.status === 'ok' ? 'text-green-700' : 'text-red-700'}>
-                      {h.label}: {h.status}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Form */}

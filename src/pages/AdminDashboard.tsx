@@ -111,7 +111,7 @@ const AdminDashboard = () => {
           className="text-center mb-8"
         >
           <h1 className="text-4xl font-bold text-white mb-2">Admin Dashboard</h1>
-          <p className="text-yellow-400">TMSS Matric Farewell 2024</p>
+          <p className="text-yellow-400">TMSS Matric Farewell 2025</p>
         </motion.div>
 
         {/* Statistics Cards */}
@@ -195,7 +195,7 @@ const AdminDashboard = () => {
             </button>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto hidden md:block">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200">
@@ -228,6 +228,34 @@ const AdminDashboard = () => {
               </tbody>
             </table>
           </div>
+          <div className="md:hidden space-y-3">
+            {classStats.map((cls) => (
+              <div key={cls.id} className="border border-slate-200 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <p className="font-semibold text-slate-900">{cls.name}</p>
+                  <span className={`text-sm font-bold ${
+                    cls.attendanceRate >= 80 ? 'text-green-600' : 
+                    cls.attendanceRate >= 60 ? 'text-yellow-600' : 'text-red-600'
+                  }`}>{cls.attendanceRate.toFixed(1)}%</span>
+                </div>
+                <p className="text-sm text-slate-600">Teacher: {cls.form_teacher?.name || 'N/A'}</p>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-xs text-slate-500">Total</p>
+                    <p className="font-medium">{cls.total}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Registered</p>
+                    <p className="font-medium text-green-600">{cls.registered}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Attended</p>
+                    <p className="font-medium text-yellow-600">{cls.attended}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </motion.div>
 
         {/* Recent Registrations */}
@@ -238,7 +266,7 @@ const AdminDashboard = () => {
           className="bg-white rounded-xl shadow-xl p-6"
         >
           <h2 className="text-2xl font-bold text-slate-900 mb-6">Recent Registrations</h2>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto hidden md:block">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200">
@@ -274,6 +302,27 @@ const AdminDashboard = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="md:hidden space-y-3">
+            {students.slice(0, 10).map((student) => (
+              <div key={student.id} className="border border-slate-200 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <p className="font-medium text-slate-900">{student.name}</p>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    student.attended ? 'bg-green-100 text-green-800' :
+                    student.registered ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {student.attended ? 'Attended' : student.registered ? 'Registered' : 'Not Registered'}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-600">ID: {student.student_id}</p>
+                <p className="text-sm text-slate-600">Class: {student.class?.name || 'N/A'}</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  {student.check_in_time ? new Date(student.check_in_time).toLocaleTimeString() : 'Not checked in'}
+                </p>
+              </div>
+            ))}
           </div>
         </motion.div>
       </div>

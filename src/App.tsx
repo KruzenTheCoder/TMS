@@ -23,11 +23,11 @@ const Navigation = () => {
       className="bg-white shadow-lg sticky top-0 z-50"
     >
       <div className="max-w-6xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="text-xl font-bold text-slate-900">
+        <div className="flex items-center justify-between h-16 flex-wrap gap-2">
+          <Link to="/" className="text-lg sm:text-xl font-bold text-slate-900">
             TMSS Farewell 2025
           </Link>
-          <div className="flex space-x-6">
+          <div className="flex space-x-4 sm:space-x-6 mt-2 sm:mt-0">
             <Link
               to="/admin"
               className="text-slate-600 hover:text-yellow-600 font-medium transition-colors"

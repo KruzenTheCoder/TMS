@@ -18,7 +18,7 @@ const InvitationCard = () => {
   const yearNum = d.getFullYear()
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden pb-8">
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
         <motion.div
@@ -59,8 +59,8 @@ const InvitationCard = () => {
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 flex items-center justify-center h-screen px-3 py-3">
-        <div className="w-full max-w-sm h-[90vh] mx-auto">
+      <div className="relative z-10 flex items-center justify-center min-h-screen px-3 py-6">
+        <div className="w-full max-w-sm mx-auto sm:h-[90vh]">
           <div className="bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-700 p-[3px] rounded-3xl shadow-[0_25px_50px_rgba(255,215,0,0.25)]">
             <div className="relative h-full rounded-3xl bg-gradient-to-br from-[#0b1430] via-[#101a3f] to-[#162253] overflow-hidden">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.4 }} transition={{ duration: 1.2 }} className="absolute inset-0 pointer-events-none">
@@ -99,13 +99,13 @@ const InvitationCard = () => {
                       <p className="text-white text-sm mt-1">{eventTime}</p>
                       <p className="text-yellow-300 text-base mt-1">{yearNum}</p>
                     </div>
-                    <div className="flex items-center justify-center space-x-2">
-                      <MapPin className="w-5 h-5 text-yellow-400" />
-                      <p className="text-white text-sm uppercase tracking-wider">Venue: {eventVenue}</p>
+                    <div className="flex flex-col items-center justify-center sm:flex-row sm:space-x-2">
+                      <MapPin className="w-5 h-5 text-yellow-400 mb-1 sm:mb-0" />
+                      <p className="text-white text-sm uppercase tracking-wider text-center">Venue: {eventVenue}</p>
                     </div>
-                    <div className="flex items-center justify-center space-x-2">
-                      <Star className="w-5 h-5 text-yellow-400" />
-                      <p className="text-white text-sm uppercase tracking-wider">Dress Code: {dressCode}</p>
+                    <div className="flex flex-col items-center justify-center sm:flex-row sm:space-x-2">
+                      <Star className="w-5 h-5 text-yellow-400 mb-1 sm:mb-0" />
+                      <p className="text-white text-sm uppercase tracking-wider text-center">Dress Code: {dressCode}</p>
                     </div>
                   </motion.div>
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 0.8 }} className="text-center mb-5">
