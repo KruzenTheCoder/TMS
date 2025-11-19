@@ -135,7 +135,40 @@ const BarcodeScanner = () => {
         .maybeSingle()
 
       if (tErr || !ticket) {
-        toast.error('Ticket not found')
+        const { data: staffTicket } = await supabase
+          .from('staff_tickets')
+          .select('id, barcode, is_used, staff:staff_id (id, initials, surname, class_name, designation)')
+          .eq('barcode', barcode)
+          .maybeSingle()
+
+        if (!staffTicket) {
+          toast.error('Ticket not found')
+          return
+        }
+
+        const st = staffTicket as unknown as StaffTicketRow
+        if (st.is_used) {
+          setLastScanned({ id: String(st.staff.id), name: `${st.staff.initials} ${st.staff.surname}`, student_id: `STAFF-${st.staff.id}`, class: { name: st.staff.class_name || st.staff.designation || 'STAFF' }, status: 'fail', message: 'Ticket already used' })
+          toast.error('Ticket already used')
+          return
+        }
+
+        const { error: aErr2 } = await supabase
+          .from('staff_attendance')
+          .insert([{ staff_id: st.staff.id, check_in_method: method, scanned_by: 'admin' }])
+
+        const { error: uErr2 } = await supabase
+          .from('staff_tickets')
+          .update({ is_used: true })
+          .eq('id', st.id)
+
+        if (aErr2 || uErr2) {
+          toast.error('Check-in failed (permissions)')
+          return
+        }
+
+        setLastScanned({ id: String(st.staff.id), name: `${st.staff.initials} ${st.staff.surname}`, student_id: `STAFF-${st.staff.id}`, class: { name: st.staff.class_name || st.staff.designation || 'STAFF' }, status: 'success', message: 'Successfully checked in!' })
+        toast.success(`${st.staff.surname || 'Ticket'} checked in successfully!`)
         return
       }
 
@@ -355,3 +388,4 @@ const BarcodeScanner = () => {
 }
 
 export default BarcodeScanner
+type StaffTicketRow = { id: string; barcode: string; is_used: boolean; staff: { id: number; initials: string; surname: string; class_name?: string | null; designation?: string | null } }

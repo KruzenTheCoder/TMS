@@ -7,6 +7,8 @@ const RegistrationForm = lazy(() => import('./pages/RegistrationForm'))
 const TicketPage = lazy(() => import('./pages/TicketPage'))
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
 const BarcodeScanner = lazy(() => import('./pages/BarcodeScanner'))
+const StaffRegister = lazy(() => import('./pages/StaffRegister'))
+const StaffTicketPage = lazy(() => import('./pages/StaffTicketPage'))
 const ADMIN_PASS = import.meta.env.VITE_ADMIN_PASSWORD || 'Admin@123'
 
 const Navigation = () => {
@@ -40,6 +42,12 @@ const Navigation = () => {
               className="text-slate-600 hover:text-yellow-600 font-medium transition-colors"
             >
               Scanner
+            </Link>
+            <Link
+              to="/staff/register"
+              className="text-slate-600 hover:text-yellow-600 font-medium transition-colors"
+            >
+              Staff
             </Link>
           </div>
         </div>
@@ -96,6 +104,12 @@ const ProtectedScanner = () => {
   return <PasswordPrompt title="Scanner" onSuccess={() => setAuthed(true)} />
 }
 
+const ProtectedStaff = () => {
+  const [authed, setAuthed] = useState(sessionStorage.getItem('tmss_admin_auth') === '1')
+  if (authed) return <StaffRegister />
+  return <PasswordPrompt title="Staff Register" onSuccess={() => setAuthed(true)} />
+}
+
 function App() {
   return (
     <Router>
@@ -109,6 +123,8 @@ function App() {
               <Route path="/ticket/:id" element={<TicketPage />} />
               <Route path="/admin" element={<ProtectedAdmin />} />
               <Route path="/admin/scanner" element={<ProtectedScanner />} />
+              <Route path="/staff/register" element={<ProtectedStaff />} />
+              <Route path="/staff/ticket/:barcode" element={<StaffTicketPage />} />
             </Routes>
           </Suspense>
         </AnimatePresence>

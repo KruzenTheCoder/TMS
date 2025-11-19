@@ -10,9 +10,10 @@ import { createClient } from '@supabase/supabase-js'
 )
 import type { Student, Class } from '../lib/supabase'
 import { toast } from 'sonner'
+ 
 
 const CLASS_TEACHERS: Record<string, string> = {
-  '12A': 'S. Balgobind',
+  '12A': 'E.J. Davids',
   '12B': 'A.L. Peter',
   '12C': 'F. Naidoo',
   '12D': 'S. Hariparsad',
@@ -22,6 +23,8 @@ const AdminDashboard = () => {
   const [students, setStudents] = useState<Student[]>([])
   const [classes, setClasses] = useState<Class[]>([])
   const [loading, setLoading] = useState(true)
+  const [staffTickets, setStaffTickets] = useState<{ id: string; barcode: string; is_used: boolean; created_at: string; staff: { id: number; initials: string; surname: string; class_name?: string | null; designation?: string | null } }[]>([])
+  const [staffAttendance, setStaffAttendance] = useState<Record<number, string>>({})
 
   useEffect(() => {
     fetchDashboardData()
@@ -58,16 +61,38 @@ const AdminDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const [studentsData, classesData] = await Promise.all([
+      const [studentsData, classesData, staffTicketsData] = await Promise.all([
         supabase.from('students').select(`
           *,
           class:class_id (name, form_teacher:form_teacher_id (name))
         `),
         supabase.from('classes').select('*'),
+        supabase
+          .from('staff_tickets')
+          .select('id, barcode, is_used, created_at, staff:staff_id (id, initials, surname, class_name, designation)')
+          .order('created_at', { ascending: false }),
       ])
 
       if (studentsData.data) setStudents(studentsData.data)
       if (classesData.data) setClasses(classesData.data)
+      if (staffTicketsData.data) {
+        const list = staffTicketsData.data as unknown as { id: string; barcode: string; is_used: boolean; created_at: string; staff: { id: number; initials: string; surname: string; class_name?: string | null; designation?: string | null } }[]
+        setStaffTickets(list)
+        const ids = Array.from(new Set(list.map(t => t.staff?.id).filter(Boolean))) as number[]
+        if (ids.length > 0) {
+          const { data: attendanceData } = await supabase
+            .from('staff_attendance')
+            .select('staff_id, check_in_time')
+            .in('staff_id', ids)
+          const map: Record<number, string> = {}
+          ;(attendanceData || []).forEach((row: { staff_id: number; check_in_time: string }) => {
+            if (!map[row.staff_id]) map[row.staff_id] = row.check_in_time
+          })
+          setStaffAttendance(map)
+        } else {
+          setStaffAttendance({})
+        }
+      }
     } catch {
       toast.error('Failed to load dashboard data')
     } finally {
@@ -184,6 +209,8 @@ const AdminDashboard = () => {
     window.URL.revokeObjectURL(url)
   }
 
+  
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
@@ -204,6 +231,8 @@ const AdminDashboard = () => {
           <h1 className="text-4xl font-bold text-white mb-2">Admin Dashboard</h1>
           <p className="text-yellow-400">TMSS Matric Farewell 2025</p>
         </motion.div>
+
+        
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -267,6 +296,32 @@ const AdminDashboard = () => {
             </div>
           </motion.div>
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.52 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8"
+        >
+          <div className="bg-white rounded-xl p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-600 text-sm font-medium">Staff Registered</p>
+                <p className="text-3xl font-bold text-slate-900">{staffTickets.length}</p>
+              </div>
+              <Users className="w-8 h-8 text-blue-600" />
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-600 text-sm font-medium">Staff Attended</p>
+                <p className="text-3xl font-bold text-yellow-600">{staffTickets.filter(s => s.is_used).length}</p>
+              </div>
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+          </div>
+        </motion.div>
 
         {/* Class Statistics */}
         <motion.div
@@ -412,6 +467,55 @@ const AdminDashboard = () => {
                 <p className="text-xs text-slate-500 mt-1">
                   {student.check_in_time ? new Date(student.check_in_time).toLocaleTimeString() : 'Not checked in'}
                 </p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.65 }}
+          className="bg-white rounded-xl shadow-xl p-6 mt-8"
+        >
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">Recent Staff</h2>
+          <div className="overflow-x-auto hidden md:block">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="text-left py-3 px-4 font-semibold text-slate-900">Name</th>
+                  <th className="text-left py-3 px-4 font-semibold text-slate-900">Role</th>
+                  <th className="text-center py-3 px-4 font-semibold text-slate-900">Status</th>
+                  <th className="text-center py-3 px-4 font-semibold text-slate-900">Check-in Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {staffTickets.slice(0, 10).map((t) => (
+                  <tr key={t.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="py-3 px-4 font-medium">{t.staff?.initials} {t.staff?.surname}</td>
+                    <td className="py-3 px-4">{t.staff?.class_name || t.staff?.designation || 'Staff'}</td>
+                    <td className="py-3 px-4 text-center">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${t.is_used ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                        {t.is_used ? 'Attended' : 'Registered'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-center text-sm text-slate-600">{t.is_used && t.staff?.id && staffAttendance[t.staff.id] ? new Date(staffAttendance[t.staff.id]).toLocaleTimeString() : 'Not checked in'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="md:hidden space-y-3">
+            {staffTickets.slice(0, 10).map((t) => (
+              <div key={t.id} className="border border-slate-200 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <p className="font-medium text-slate-900">{t.staff?.initials} {t.staff?.surname}</p>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${t.is_used ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                    {t.is_used ? 'Attended' : 'Registered'}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-600">Role: {t.staff?.class_name || t.staff?.designation || 'Staff'}</p>
+                <p className="text-xs text-slate-500 mt-1">{t.is_used && t.staff?.id && staffAttendance[t.staff.id] ? new Date(staffAttendance[t.staff.id]).toLocaleTimeString() : 'Not checked in'}</p>
               </div>
             ))}
           </div>

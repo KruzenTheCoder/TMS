@@ -22,14 +22,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Missing barcode' })
     }
 
-    const { data: ticket, error: tErr } = await supabaseServer
+    const { data: ticket } = await supabaseServer
       .from('tickets')
       .select('*, student:students(*)')
       .eq('barcode', barcode)
-      .single()
+      .maybeSingle()
 
-    if (tErr || !ticket) {
-      return res.status(404).json({ error: 'Ticket not found' })
+    if (!ticket) {
+      const { data: staffTicket, error: sErr } = await supabaseServer
+        .from('staff_tickets')
+        .select('*, staff:authorized_staff(*)')
+        .eq('barcode', barcode)
+        .maybeSingle()
+
+      if (sErr || !staffTicket) {
+        return res.status(404).json({ error: 'Ticket not found' })
+      }
+
+      if (staffTicket.is_used) {
+        return res.status(409).json({ error: 'Ticket already used' })
+      }
+
+      const { error: uErr2 } = await supabaseServer
+        .from('staff_tickets')
+        .update({ is_used: true })
+        .eq('id', staffTicket.id)
+
+      if (uErr2) return res.status(500).json({ error: 'Failed to update ticket' })
+
+      await supabaseServer.from('staff_attendance').insert([
+        { staff_id: staffTicket.staff_id, check_in_method: 'barcode' },
+      ])
+
+      const staffName = `${staffTicket.staff?.initials ?? ''} ${staffTicket.staff?.surname ?? ''}`.trim()
+      return res.status(200).json({ success: true, student: { id: String(staffTicket.staff_id), name: staffName, student_id: `STAFF-${staffTicket.staff_id}`, class: { name: staffTicket.staff?.class_name || staffTicket.staff?.designation || 'STAFF' } } })
     }
 
     if (ticket.is_used) {
