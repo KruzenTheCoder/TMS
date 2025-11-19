@@ -18,7 +18,7 @@ const InvitationCard = () => {
   const yearNum = d.getFullYear()
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
+    <div className="h-[100dvh] bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
         <motion.div
@@ -59,8 +59,8 @@ const InvitationCard = () => {
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 flex items-center justify-center h-screen px-2 py-2">
-        <div className="w-full max-w-sm h-[92vh] sm:h-[90vh] mx-auto">
+      <div className="relative z-10 flex items-center justify-center h-[100dvh] px-2 py-2">
+        <div className="w-full max-w-sm max-h-[88dvh] sm:max-h-[90vh] mx-auto">
           <div className="bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-700 p-[3px] rounded-3xl shadow-[0_25px_50px_rgba(255,215,0,0.25)]">
             <div className="relative h-full rounded-3xl bg-gradient-to-br from-[#0b1430] via-[#101a3f] to-[#162253] overflow-hidden">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.4 }} transition={{ duration: 1.2 }} className="absolute inset-0 pointer-events-none">
