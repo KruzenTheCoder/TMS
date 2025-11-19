@@ -86,7 +86,7 @@ const TicketPage = () => {
       try {
         await navigator.share({
           title: 'TMSS Matric Farewell Ticket',
-          text: `My ticket for TMSS Matric Farewell 2024`,
+          text: `My ticket for TMSS Matric Farewell 2025`,
           url: window.location.href
         })
       } catch (error) {

@@ -25,7 +25,7 @@ const Navigation = () => {
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="text-xl font-bold text-slate-900">
-            TMSS Farewell 2024
+            TMSS Farewell 2025
           </Link>
           <div className="flex space-x-6">
             <Link
