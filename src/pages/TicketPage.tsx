@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { Download, Share2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import type { Student, Ticket } from '../lib/supabase'
-import { generateQRCode } from '../utils/ticketUtils'
+import { QRCodeCanvas } from 'qrcode.react'
 import { toast } from 'sonner'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -19,7 +19,7 @@ const TicketPage = () => {
   const dateLabel = d.toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' })
   const [student, setStudent] = useState<Student | null>(null)
   const [ticket, setTicket] = useState<Ticket | null>(null)
-  const [qrCode, setQrCode] = useState<string>('')
+  
   const [loading, setLoading] = useState(true)
   const dressCode = import.meta.env.VITE_DRESS_CODE || 'Formal'
 
@@ -47,8 +47,6 @@ const TicketPage = () => {
 
         if (ticketData) {
           setTicket(ticketData)
-          const qrUrl = await generateQRCode(ticketData.barcode)
-          setQrCode(qrUrl)
         }
       }
     } catch {
@@ -81,7 +79,7 @@ const TicketPage = () => {
       backgroundColor: '#ffffff',
       useCORS: true,
       allowTaint: true,
-      scale: Math.ceil(window.devicePixelRatio) || 2
+      scale: 2
     })
 
     const imgData = canvas.toDataURL('image/png')
@@ -141,7 +139,7 @@ const TicketPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="bg-white rounded-2xl shadow-xl border border-amber-100 overflow-hidden"
+          className="bg-white rounded-2xl shadow-xl border border-amber-100"
         >
           {/* Ticket Card */}
           <div id="ticket-card" className="p-6">
@@ -168,7 +166,7 @@ const TicketPage = () => {
               </div>
               <div className="flex items-center justify-center">
                 <div className="p-4 rounded-xl border border-amber-100 text-center">
-                  <img src={qrCode} alt="Ticket QR Code" className="h-40 w-40 md:h-48 md:w-48 object-contain" />
+                  <QRCodeCanvas value={ticket.barcode} size={192} includeMargin={true} />
                   <p className="mt-3 text-sm text-slate-700 font-mono">{ticket.barcode}</p>
                 </div>
               </div>

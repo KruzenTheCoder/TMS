@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Download, Share2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { generateQRCode } from '../utils/ticketUtils'
+import { QRCodeCanvas } from 'qrcode.react'
 import { toast } from 'sonner'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -27,7 +27,7 @@ const StaffTicketPage = () => {
   const d = new Date(eventDate)
   const dateLabel = d.toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' })
   const [ticket, setTicket] = useState<StaffTicket | null>(null)
-  const [qrCode, setQrCode] = useState<string>('')
+  
   const [loading, setLoading] = useState(true)
 
   const fetchTicket = useCallback(async () => {
@@ -39,8 +39,6 @@ const StaffTicketPage = () => {
         .maybeSingle()
       if (data) {
         setTicket(data as unknown as StaffTicket)
-        const qrUrl = await generateQRCode(String(data.barcode))
-        setQrCode(qrUrl)
       }
     } catch {
       toast.error('Failed to load staff ticket')
@@ -56,15 +54,31 @@ const StaffTicketPage = () => {
   const downloadPDF = async () => {
     try {
       const el = document.getElementById('staff-ticket-card') as HTMLElement
-      const canvas = await html2canvas(el, { scale: 2 })
+      const images = Array.from(el.querySelectorAll('img'))
+      await Promise.all(
+        images.map(img => new Promise<void>(resolve => {
+          if (img.complete) return resolve()
+          img.onload = () => resolve()
+          img.onerror = () => resolve()
+        }))
+      )
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const canvas = await html2canvas(el, { backgroundColor: '#ffffff', useCORS: true, allowTaint: true, scale: 2 })
       const imgData = canvas.toDataURL('image/png')
       const pdf = new jsPDF('p', 'mm', 'a4')
       const pageWidth = pdf.internal.pageSize.getWidth()
       const pageHeight = pdf.internal.pageSize.getHeight()
-      const imgWidth = pageWidth - 20
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
-      const y = (pageHeight - imgHeight) / 2
-      pdf.addImage(imgData, 'PNG', 10, y, imgWidth, imgHeight)
+      const imgAspect = canvas.width / canvas.height
+      let renderWidth = pageWidth - 20
+      let renderHeight = renderWidth / imgAspect
+      if (renderHeight > pageHeight - 20) {
+        renderHeight = pageHeight - 20
+        renderWidth = renderHeight * imgAspect
+      }
+      const x = (pageWidth - renderWidth) / 2
+      const y = (pageHeight - renderHeight) / 2
+      pdf.addImage(imgData, 'PNG', x, y, renderWidth, renderHeight)
       pdf.save(`TMSS-Staff-Ticket-${ticket?.barcode}.pdf`)
     } catch {
       toast.error('Failed to download ticket')
@@ -112,7 +126,7 @@ const StaffTicketPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="bg-white rounded-2xl shadow-xl border border-amber-100 overflow-hidden"
+          className="bg-white rounded-2xl shadow-xl border border-amber-100"
         >
           <div id="staff-ticket-card" className="p-6">
             <div className="text-center mb-6">
@@ -136,7 +150,7 @@ const StaffTicketPage = () => {
               </div>
               <div className="flex items-center justify-center">
                 <div className="bg-white p-4 rounded-xl border border-amber-100">
-                  <img src={qrCode} alt="Ticket QR" className="w-64 h-64" />
+                  <QRCodeCanvas value={ticket.barcode} size={256} includeMargin={true} />
                 </div>
               </div>
             </div>
