@@ -15,6 +15,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return res.status(500).json({ error: 'Service unavailable', details: 'Supabase server credentials not configured' })
+    }
+
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body
     const { name, surname, className } = body || {}
 
