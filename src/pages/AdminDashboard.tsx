@@ -414,7 +414,7 @@ const AdminDashboard = () => {
           className="bg-white rounded-xl shadow-xl p-6"
         >
           <h2 className="text-2xl font-bold text-slate-900 mb-6">Recent Registrations</h2>
-          <div className="overflow-x-auto hidden md:block">
+          <div className="overflow-x-auto overflow-y-auto hidden md:block max-h-[480px]">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200">
@@ -426,7 +426,7 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {students.filter(s => s.registered).slice(0, 10).map((student) => (
+                {students.filter(s => s.registered).map((student) => (
                   <tr key={student.id} className="border-b border-slate-100 hover:bg-slate-50">
                     <td className="py-3 px-4 font-mono text-sm">{student.student_id}</td>
                     <td className="py-3 px-4 font-medium">{student.name}</td>
@@ -451,8 +451,8 @@ const AdminDashboard = () => {
               </tbody>
             </table>
           </div>
-          <div className="md:hidden space-y-3">
-            {students.filter(s => s.registered).slice(0, 10).map((student) => (
+          <div className="md:hidden space-y-3 max-h-[480px] overflow-y-auto pr-2">
+            {students.filter(s => s.registered).map((student) => (
               <div key={student.id} className="border border-slate-200 rounded-lg p-4">
                 <div className="flex justify-between items-center">
                   <p className="font-medium text-slate-900">{student.name}</p>
@@ -481,7 +481,7 @@ const AdminDashboard = () => {
           className="bg-white rounded-xl shadow-xl p-6 mt-8"
         >
           <h2 className="text-2xl font-bold text-slate-900 mb-6">Recent Staff</h2>
-          <div className="overflow-x-auto hidden md:block">
+          <div className="overflow-x-auto overflow-y-auto hidden md:block max-h-[480px]">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200">
@@ -492,7 +492,7 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {staffTickets.slice(0, 10).map((t) => (
+                {staffTickets.map((t) => (
                   <tr key={t.id} className="border-b border-slate-100 hover:bg-slate-50">
                     <td className="py-3 px-4 font-medium">{t.staff?.initials} {t.staff?.surname}</td>
                     <td className="py-3 px-4">{t.staff?.class_name || t.staff?.designation || 'Staff'}</td>
@@ -507,8 +507,8 @@ const AdminDashboard = () => {
               </tbody>
             </table>
           </div>
-          <div className="md:hidden space-y-3">
-            {staffTickets.slice(0, 10).map((t) => (
+          <div className="md:hidden space-y-3 max-h-[480px] overflow-y-auto pr-2">
+            {staffTickets.map((t) => (
               <div key={t.id} className="border border-slate-200 rounded-lg p-4">
                 <div className="flex justify-between items-center">
                   <p className="font-medium text-slate-900">{t.staff?.initials} {t.staff?.surname}</p>

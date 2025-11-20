@@ -1,4 +1,4 @@
-import { supabaseServer } from './_lib/supabase'
+import { supabaseServer, generateTicketNumber } from './_lib/supabase'
 
 interface VercelRequest {
   method?: string;
@@ -22,6 +22,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Missing required fields' })
     }
 
+    const fullName = `${String(name).trim()} ${String(surname).trim()}`
+
     let cls
     const { data: existingClass } = await supabaseServer
       .from('classes')
@@ -44,11 +46,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       cls = created
     }
 
+    const { data: authorized } = await supabaseServer
+      .from('authorized_students')
+      .select('id')
+      .ilike('name', fullName)
+      .eq('class_name', className)
+      .maybeSingle()
+
+    if (!authorized) {
+      return res.status(403).json({ error: 'Not authorized to register for this event' })
+    }
+
     const { data: existing } = await supabaseServer
       .from('students')
       .select('id')
-      .eq('name', name)
-      .eq('surname', surname)
+      .eq('name', fullName)
       .eq('class_id', cls.id)
       .maybeSingle()
 
@@ -56,9 +68,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(409).json({ error: 'Student already registered for this class' })
     }
 
+    const autoStudentId = `S-${generateTicketNumber()}`
     const { data: student, error: studentError } = await supabaseServer
       .from('students')
-      .insert([{ name, surname, class_id: cls.id, attended: false }])
+      .insert([{ student_id: autoStudentId, name: fullName, email: null, class_id: cls.id, registered: true, attended: false }])
       .select()
       .single()
 
@@ -66,14 +79,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Failed to create student' })
     }
 
-    const uniqueCode = `${name.substring(0, 2).toUpperCase()}${Date.now().toString().slice(-6)}`
+    const ticketNumber = generateTicketNumber()
     const { data: ticket, error: ticketError } = await supabaseServer
       .from('tickets')
       .insert([{ 
           student_id: student.id, 
-          barcode: uniqueCode, 
+          barcode: ticketNumber, 
           is_used: false, 
-          ticket_data: { student_name: `${name} ${surname}`, class: className } 
+          ticket_data: { 
+            student_name: fullName,
+            student_id: autoStudentId,
+            class: className,
+            event_name: process.env.VITE_APP_NAME || 'TMSS Matric Farewell 2025',
+            event_date: new Date(String(process.env.VITE_EVENT_DATE || '2025-11-27')).toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' }),
+            event_time: process.env.VITE_EVENT_TIME || '11:00 - 17:00',
+            venue: process.env.VITE_EVENT_VENUE || 'Havenpark Secondary School',
+            entertainment: 'DJ by TMSS',
+          } 
       }])
       .select()
       .single()
