@@ -9,7 +9,9 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
 const BarcodeScanner = lazy(() => import('./pages/BarcodeScanner'))
 const StaffRegister = lazy(() => import('./pages/StaffRegister'))
 const StaffTicketPage = lazy(() => import('./pages/StaffTicketPage'))
+const Console = lazy(() => import('./pages/Console'))
 const ADMIN_PASS = import.meta.env.VITE_ADMIN_PASSWORD || 'Admin@123'
+const CONSOLE_PASS = 'Tms@123'
 
 const Navigation = () => {
   const location = useLocation()
@@ -49,6 +51,12 @@ const Navigation = () => {
             >
               Staff
             </Link>
+            <Link
+              to="/console"
+              className="text-slate-600 hover:text-yellow-600 font-medium transition-colors text-sm sm:text-base"
+            >
+              Console
+            </Link>
           </div>
         </div>
       </div>
@@ -56,12 +64,13 @@ const Navigation = () => {
   )
 }
 
-const PasswordPrompt = ({ title, onSuccess }: { title: string; onSuccess: () => void }) => {
+const PasswordPrompt = ({ title, onSuccess, pass }: { title: string; onSuccess: () => void; pass?: string }) => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (password === ADMIN_PASS) {
+    const expected = pass ?? ADMIN_PASS
+    if (password === expected) {
       sessionStorage.setItem('tmss_admin_auth', '1')
       onSuccess()
     } else {
@@ -110,6 +119,13 @@ const ProtectedStaff = () => {
   return <PasswordPrompt title="Staff Register" onSuccess={() => setAuthed(true)} />
 }
 
+const ProtectedConsole = () => {
+  const [authed, setAuthed] = useState(sessionStorage.getItem('tmss_console_auth') === '1')
+  const onSuccess = () => { sessionStorage.setItem('tmss_console_auth', '1'); setAuthed(true) }
+  if (authed) return <Console />
+  return <PasswordPrompt title="Console" onSuccess={onSuccess} pass={CONSOLE_PASS} />
+}
+
 function App() {
   return (
     <Router>
@@ -125,6 +141,7 @@ function App() {
               <Route path="/admin/scanner" element={<ProtectedScanner />} />
               <Route path="/staff/register" element={<ProtectedStaff />} />
               <Route path="/staff/ticket/:barcode" element={<StaffTicketPage />} />
+              <Route path="/console" element={<ProtectedConsole />} />
             </Routes>
           </Suspense>
         </AnimatePresence>

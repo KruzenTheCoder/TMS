@@ -59,6 +59,20 @@ const StaffRegister = () => {
         return
       }
       const staff = data[0]
+
+      const { data: existing } = await supabase
+        .from('staff_tickets')
+        .select('barcode')
+        .eq('staff_id', staff.id)
+        .maybeSingle()
+
+      if (existing) {
+        setTicketCode(existing.barcode)
+        setTicketQr(generateQRCode(existing.barcode))
+        toast.success('Staff already registered — showing existing ticket')
+        return
+      }
+
       const ticketNumber = generateTicketNumber()
       const { data: ticket, error: ticketError } = await supabase
         .from('staff_tickets')
