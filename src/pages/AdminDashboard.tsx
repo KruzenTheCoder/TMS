@@ -32,6 +32,8 @@ const AdminDashboard = () => {
       .channel('realtime-dashboard')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, fetchDashboardData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'staff_tickets' }, fetchDashboardData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'staff_attendance' }, fetchDashboardData)
       .subscribe()
 
     return () => {
