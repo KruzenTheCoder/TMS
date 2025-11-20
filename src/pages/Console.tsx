@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 
 type StudentRow = { id: string; name: string; student_id: string; class: { name: string } }
-type StaffRow = { staff_id: number; barcode: string; is_used: boolean; staff: { id: number; initials: string; surname: string; class_name?: string | null; designation?: string | null } }
+type StaffRow = { id: string; staff_id: number; barcode: string; is_used: boolean; staff: { id: number; initials: string; surname: string; class_name?: string | null; designation?: string | null } }
 
 const Console = () => {
   const [students, setStudents] = useState<StudentRow[]>([])
@@ -24,11 +24,17 @@ const Console = () => {
           .order('created_at', { ascending: false }),
         supabase
           .from('staff_tickets')
-          .select('staff_id, barcode, is_used, staff:staff_id (id, initials, surname, class_name, designation)')
+          .select('id, staff_id, barcode, is_used, staff:staff_id (id, initials, surname, class_name, designation)')
           .order('created_at', { ascending: false }),
       ])
       setStudents((sData || []) as unknown as StudentRow[])
-      setStaff((stData || []) as unknown as StaffRow[])
+      const seen = new Set<string>()
+      const deduped = ((stData || []) as unknown as StaffRow[]).filter((row) => {
+        if (seen.has(row.id)) return false
+        seen.add(row.id)
+        return true
+      })
+      setStaff(deduped)
     } catch {
       toast.error('Failed to load data')
     } finally {
@@ -45,19 +51,20 @@ const Console = () => {
 
   const deleteStudent = async (id: string) => {
     try {
-      const res = await fetch('/api/console-delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'student', id }) })
-      if (!res.ok) { toast.error('Delete failed'); return }
+      const { error } = await supabase.rpc('delete_student_registration', { p_student_id: id })
+      if (error) { toast.error('Delete failed'); return }
       toast.success('Student deleted')
       setStudents(students.filter(s => s.id !== id))
+      fetchData()
     } catch { toast.error('Delete failed') }
   }
 
-  const deleteStaff = async (staff_id: number) => {
+  const deleteStaff = async (_ticket_id: string, staff_id: number) => {
     try {
-      const res = await fetch('/api/console-delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'staff', id: staff_id }) })
-      if (!res.ok) { toast.error('Delete failed'); return }
-      toast.success('Staff ticket deleted')
-      setStaff(staff.filter(s => s.staff_id !== staff_id))
+      const { error } = await supabase.rpc('delete_staff_registration', { p_staff_id: staff_id })
+      if (error) { toast.error('Delete failed'); return }
+      toast.success('Staff records deleted')
+      fetchData()
     } catch { toast.error('Delete failed') }
   }
 
@@ -137,14 +144,14 @@ const Console = () => {
                 </thead>
                 <tbody>
                   {filteredStaff.map((s) => (
-                    <tr key={s.staff_id} className="border-b border-slate-100 hover:bg-slate-50 text-xs">
+                    <tr key={s.id} className="border-b border-slate-100 hover:bg-slate-50 text-xs">
                       <td className="py-2 px-3 font-medium">{s.staff.initials} {s.staff.surname}</td>
                       <td className="py-2 px-3">{s.staff.class_name || s.staff.designation || 'Staff'}</td>
                       <td className="py-2 px-3 font-mono text-[11px]">{s.barcode}</td>
                       <td className="py-2 px-3 text-center">
                         <div className="flex justify-center gap-2">
                           <button onClick={() => navigate(`/staff/ticket/${s.barcode}`)} className="px-2 py-1 rounded bg-yellow-500 hover:bg-yellow-600 text-white text-xs">View</button>
-                          <button onClick={() => deleteStaff(s.staff_id)} className="px-2 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-xs">Delete</button>
+                          <button onClick={() => deleteStaff(s.id, s.staff_id)} className="px-2 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-xs">Delete</button>
                         </div>
                       </td>
                     </tr>
@@ -154,12 +161,12 @@ const Console = () => {
             </div>
             <div className="md:hidden space-y-3">
               {filteredStaff.map((s) => (
-                <div key={s.staff_id} className="border border-slate-200 rounded-lg p-3">
+                <div key={s.id} className="border border-slate-200 rounded-lg p-3">
                   <p className="font-medium text-slate-900 text-sm">{s.staff.initials} {s.staff.surname}</p>
                   <p className="text-xs text-slate-600">{s.staff.class_name || s.staff.designation || 'Staff'} • {s.barcode}</p>
                   <div className="flex gap-2 mt-2">
                     <button onClick={() => navigate(`/staff/ticket/${s.barcode}`)} className="px-2 py-1 rounded bg-yellow-500 hover:bg-yellow-600 text-white text-xs">View</button>
-                    <button onClick={() => deleteStaff(s.staff_id)} className="px-2 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-xs">Delete</button>
+                    <button onClick={() => deleteStaff(s.id, s.staff_id)} className="px-2 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-xs">Delete</button>
                   </div>
                 </div>
               ))}

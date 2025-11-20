@@ -426,7 +426,7 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {students.slice(0, 10).map((student) => (
+                {students.filter(s => s.registered).slice(0, 10).map((student) => (
                   <tr key={student.id} className="border-b border-slate-100 hover:bg-slate-50">
                     <td className="py-3 px-4 font-mono text-sm">{student.student_id}</td>
                     <td className="py-3 px-4 font-medium">{student.name}</td>
@@ -452,7 +452,7 @@ const AdminDashboard = () => {
             </table>
           </div>
           <div className="md:hidden space-y-3">
-            {students.slice(0, 10).map((student) => (
+            {students.filter(s => s.registered).slice(0, 10).map((student) => (
               <div key={student.id} className="border border-slate-200 rounded-lg p-4">
                 <div className="flex justify-between items-center">
                   <p className="font-medium text-slate-900">{student.name}</p>

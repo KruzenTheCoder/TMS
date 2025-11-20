@@ -20,11 +20,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!type || !id) return res.status(400).json({ error: 'Missing type or id' })
 
     if (type === 'student') {
-      const { error } = await supabaseServer
+      const { error: aErr } = await supabaseServer
+        .from('attendance')
+        .delete()
+        .eq('student_id', id)
+
+      const { error: tErr } = await supabaseServer
+        .from('tickets')
+        .delete()
+        .eq('student_id', id)
+
+      const { error: sErr } = await supabaseServer
         .from('students')
         .delete()
         .eq('id', id)
-      if (error) return res.status(500).json({ error: 'Failed to delete student' })
+
+      if (aErr || tErr || sErr) return res.status(500).json({ error: 'Failed to delete student records' })
       return res.status(200).json({ success: true })
     }
 

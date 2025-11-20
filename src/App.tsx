@@ -71,7 +71,6 @@ const PasswordPrompt = ({ title, onSuccess, pass }: { title: string; onSuccess: 
     e.preventDefault()
     const expected = pass ?? ADMIN_PASS
     if (password === expected) {
-      sessionStorage.setItem('tmss_admin_auth', '1')
       onSuccess()
     } else {
       setError('Incorrect password')
@@ -81,7 +80,7 @@ const PasswordPrompt = ({ title, onSuccess, pass }: { title: string; onSuccess: 
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center px-4">
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl border-2 border-yellow-400 p-6">
         <h1 className="text-xl font-bold text-slate-900 mb-2">{title}</h1>
-        <p className="text-slate-600 mb-4">Enter admin password to continue</p>
+        <p className="text-slate-600 mb-4">Enter password to continue</p>
         <form onSubmit={submit} className="space-y-4">
           <input
             type="password"
@@ -104,19 +103,22 @@ const PasswordPrompt = ({ title, onSuccess, pass }: { title: string; onSuccess: 
 const ProtectedAdmin = () => {
   const [authed, setAuthed] = useState(sessionStorage.getItem('tmss_admin_auth') === '1')
   if (authed) return <AdminDashboard />
-  return <PasswordPrompt title="Admin" onSuccess={() => setAuthed(true)} />
+  const onSuccess = () => { sessionStorage.setItem('tmss_admin_auth', '1'); setAuthed(true) }
+  return <PasswordPrompt title="Admin" onSuccess={onSuccess} />
 }
 
 const ProtectedScanner = () => {
   const [authed, setAuthed] = useState(sessionStorage.getItem('tmss_admin_auth') === '1')
   if (authed) return <BarcodeScanner />
-  return <PasswordPrompt title="Scanner" onSuccess={() => setAuthed(true)} />
+  const onSuccess = () => { sessionStorage.setItem('tmss_admin_auth', '1'); setAuthed(true) }
+  return <PasswordPrompt title="Scanner" onSuccess={onSuccess} />
 }
 
 const ProtectedStaff = () => {
   const [authed, setAuthed] = useState(sessionStorage.getItem('tmss_admin_auth') === '1')
   if (authed) return <StaffRegister />
-  return <PasswordPrompt title="Staff Register" onSuccess={() => setAuthed(true)} />
+  const onSuccess = () => { sessionStorage.setItem('tmss_admin_auth', '1'); setAuthed(true) }
+  return <PasswordPrompt title="Staff Register" onSuccess={onSuccess} />
 }
 
 const ProtectedConsole = () => {

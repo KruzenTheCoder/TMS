@@ -1,8 +1,9 @@
 {
-  "builds": [
-    { "src": "package.json", "use": "@vercel/static-build", "config": { "distDir": "dist" } }
-  ],
-  "rewrites": [
-    { "source": "/((?!api\/.*).*)", "destination": "/index.html" }
-  ]
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs20.x",
+      "memory": 128,
+      "maxDuration": 10
+    }
+  }
 }
