@@ -52,179 +52,80 @@ const RegistrationForm = () => {
         return
       }
 
-      if (import.meta.env.DEV) {
-        const { data: cls } = await supabase
-          .from('classes')
-          .select('id, name')
-          .eq('name', formData.className)
-          .maybeSingle()
+      const { data: cls } = await supabase
+        .from('classes')
+        .select('id, name')
+        .eq('name', formData.className)
+        .maybeSingle()
 
-        const className = formData.className
+      const className = formData.className
 
-        const { data: existing } = await supabase
-          .from('students')
-          .select('id')
-          .eq('name', fullName)
-          .eq('class_id', cls?.id ?? null)
-          .maybeSingle()
+      const { data: existing } = await supabase
+        .from('students')
+        .select('id')
+        .eq('name', fullName)
+        .eq('class_id', cls?.id ?? null)
+        .maybeSingle()
 
-        if (existing) {
-          toast.error('Student already registered for this class')
-          setLoading(false)
-          return
-        }
-
-        const ticketSeed = generateTicketNumber()
-        const autoStudentId = `S-${ticketSeed}`
-
-        const { data: student, error: studentError } = await supabase
-          .from('students')
-          .insert([
-            {
-              student_id: autoStudentId,
-              name: fullName,
-              email: null,
-              class_id: cls?.id ?? null,
-              registered: true,
-            },
-          ])
-          .select()
-          .single()
-
-        if (studentError || !student) {
-          toast.error('Failed to create student')
-          setLoading(false)
-          return
-        }
-
-        const ticketNumber = generateTicketNumber()
-        const { data: ticket, error: ticketError } = await supabase
-          .from('tickets')
-          .insert([
-            {
-              student_id: student.id,
-              barcode: ticketNumber,
-              is_used: false,
-              ticket_data: {
-                student_name: fullName,
-                student_id: autoStudentId,
-                class: className,
-                event_name: appName,
-                event_date: dateLabel,
-                event_time: eventTime,
-                venue: eventVenue,
-                entertainment: 'DJ by TMSS',
-              },
-            },
-          ])
-          .select()
-          .single()
-
-        if (ticketError || !ticket) {
-          toast.error('Failed to create ticket')
-          setLoading(false)
-          return
-        }
-
-        json = { student }
-      } else {
-        const response = await fetch('/api/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: formData.name,
-            surname: formData.surname,
-            className: formData.className,
-          })
-        })
-        if (response.status === 404) {
-          const { data: cls } = await supabase
-            .from('classes')
-            .select('id, name')
-            .eq('name', formData.className)
-            .maybeSingle()
-
-          const className = formData.className
-
-          const { data: existing } = await supabase
-            .from('students')
-            .select('id')
-            .eq('name', fullName)
-            .eq('class_id', cls?.id ?? null)
-            .maybeSingle()
-
-          if (existing) {
-            toast.error('Student already registered for this class')
-            setLoading(false)
-            return
-          }
-
-          const ticketSeed = generateTicketNumber()
-          const autoStudentId = `S-${ticketSeed}`
-
-          const { data: student, error: studentError } = await supabase
-            .from('students')
-            .insert([
-              {
-                student_id: autoStudentId,
-                name: fullName,
-                email: null,
-                class_id: cls?.id ?? null,
-                registered: true,
-              },
-            ])
-            .select()
-            .single()
-
-          if (studentError || !student) {
-            toast.error('Failed to create student')
-            setLoading(false)
-            return
-          }
-
-          const ticketNumber = generateTicketNumber()
-          const { data: ticket, error: ticketError } = await supabase
-            .from('tickets')
-            .insert([
-              {
-                student_id: student.id,
-                barcode: ticketNumber,
-                is_used: false,
-              ticket_data: {
-                student_name: fullName,
-                student_id: autoStudentId,
-                class: className,
-                event_name: appName,
-                event_date: dateLabel,
-                event_time: eventTime,
-                venue: eventVenue,
-                entertainment: 'DJ by TMSS',
-              },
-              },
-            ])
-            .select()
-            .single()
-
-          if (ticketError || !ticket) {
-            toast.error('Failed to create ticket')
-            setLoading(false)
-            return
-          }
-
-          json = { student }
-        } else {
-          try {
-            json = await response.json()
-          } catch {
-            json = null
-          }
-          if (!response.ok || !json) {
-            toast.error('Registration failed. Please try again.')
-            setLoading(false)
-            return
-          }
-        }
+      if (existing) {
+        toast.error('Student already registered for this class')
+        setLoading(false)
+        return
       }
+
+      const ticketSeed = generateTicketNumber()
+      const autoStudentId = `S-${ticketSeed}`
+
+      const { data: student, error: studentError } = await supabase
+        .from('students')
+        .insert([
+          {
+            student_id: autoStudentId,
+            name: fullName,
+            email: null,
+            class_id: cls?.id ?? null,
+            registered: true,
+          },
+        ])
+        .select()
+        .single()
+
+      if (studentError || !student) {
+        toast.error('Failed to create student')
+        setLoading(false)
+        return
+      }
+
+      const ticketNumber = generateTicketNumber()
+      const { data: ticket, error: ticketError } = await supabase
+        .from('tickets')
+        .insert([
+          {
+            student_id: student.id,
+            barcode: ticketNumber,
+            is_used: false,
+            ticket_data: {
+              student_name: fullName,
+              student_id: autoStudentId,
+              class: className,
+              event_name: appName,
+              event_date: dateLabel,
+              event_time: eventTime,
+              venue: eventVenue,
+              entertainment: 'DJ by TMSS',
+            },
+          },
+        ])
+        .select()
+        .single()
+
+      if (ticketError || !ticket) {
+        toast.error('Failed to create ticket')
+        setLoading(false)
+        return
+      }
+
+      json = { student }
 
       toast.success('Registration successful! Generating your ticket...')
       navigate(`/ticket/${json!.student.id}`)
