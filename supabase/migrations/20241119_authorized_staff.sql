@@ -69,7 +69,14 @@ from (
   ('R','R','DEBBA','DEPT. HEAD'),
   ('L','L','GOVENDER','DEPT. PRINCIPAL'),
   ('D','D','RAMNARIAN','PRINCIPAL'),
-  ('S','S','MUNISAMY','ADMIN')
+  ('S','S','MUNISAMY','ADMIN'),
+  ('M A','MA','SAHIB','STAFF'),
+  ('K L','KL','NAICKER','STAFF'),
+  ('N','N','CHETTY','STAFF'),
+  ('T','T','NAIDOO','STAFF'),
+  ('C','C','KARUNCHUND','STAFF'),
+  ('A','A','EBRAHIM','STAFF'),
+  ('M J','MJ','NKOSI','STAFF')
 ) as v(initials, initials_sanitized, surname, designation)
 where not exists (
   select 1 from public.authorized_staff a

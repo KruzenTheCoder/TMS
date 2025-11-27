@@ -48,7 +48,7 @@ const BarcodeScanner = () => {
         body: JSON.stringify({ barcode })
       })
 
-      if (response.status === 404) {
+      if (!response.ok) {
         await checkinFallback(barcode, 'scan')
       } else {
         let json: unknown = null
@@ -56,11 +56,7 @@ const BarcodeScanner = () => {
         if (ct && ct.includes('application/json')) {
           try { json = await response.json() } catch { json = null }
         }
-        if (!response.ok || !json) {
-          toast.error('Check-in failed')
-          setScanning(false)
-          return
-        }
+        if (!json) { await checkinFallback(barcode, 'scan'); setScanning(false); return }
         const data = json as { student?: LastScanBase }
         setLastScanned({
           ...(data.student as LastScanBase),
@@ -96,7 +92,7 @@ const BarcodeScanner = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ barcode: code })
       })
-      if (response.status === 404) {
+      if (!response.ok) {
         await checkinFallback(code, 'manual')
         setManualCode('')
       } else {
@@ -105,10 +101,7 @@ const BarcodeScanner = () => {
         if (ct && ct.includes('application/json')) {
           try { json = await response.json() } catch { json = null }
         }
-        if (!response.ok || !json) {
-          toast.error('Check-in failed')
-          return
-        }
+        if (!json) { await checkinFallback(code, 'manual'); return }
         const data = json as { student?: LastScanBase }
         setLastScanned({
           ...(data.student as LastScanBase),

@@ -10,7 +10,7 @@ const StaffRegister = () => {
   const [surname, setSurname] = useState('')
   const [mode, setMode] = useState<'class' | 'designation'>('class')
   const [className, setClassName] = useState('12A')
-  const [designation, setDesignation] = useState('PRINCIPAL')
+  const [designation, setDesignation] = useState('STAFF')
   const [loading, setLoading] = useState(false)
   const [ticketCode, setTicketCode] = useState<string>('')
   const [ticketQr, setTicketQr] = useState<string>('')
